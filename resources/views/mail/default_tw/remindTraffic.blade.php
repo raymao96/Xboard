@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>流量預警</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f5;padding:40px 20px;">
+<tr><td align="center">
+<table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;">
+    <!-- Logo -->
+    <tr><td style="padding-bottom:24px;text-align:center;">
+        <span style="font-size:20px;font-weight:700;color:#18181b;">{{$name}}</span>
+    </td></tr>
+    <!-- Card -->
+    <tr><td style="background:#ffffff;border-radius:12px;border:1px solid #e4e4e7;padding:40px;">
+        <table width="100%" cellpadding="0" cellspacing="0">
+            <tr><td style="font-size:22px;font-weight:700;color:#18181b;padding-bottom:8px;">流量預警</td></tr>
+            <tr><td style="font-size:15px;color:#52525b;line-height:1.7;padding-bottom:12px;">您的本月流量已消耗 <strong style="color:#18181b;">80%</strong>。</td></tr>
+            <tr><td style="font-size:15px;color:#52525b;line-height:1.7;padding-bottom:28px;">請合理評估用量。您可以等待每月免費固定重置，也可以付費提前重置，根據您的訂閱計劃，重置價格可能有所不同。</td></tr>
+            <tr><td align="center">
+                <a href="https://tw.getrapps.org" style="display:inline-block;background:#18181b;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;padding:12px 28px;border-radius:8px;">查詢用量</a>
+            </td></tr>
+        </table>
+    </td></tr>
+    <!-- Footer -->
+    <tr><td style="padding-top:24px;text-align:center;">
+        <p style="font-size:12px;color:#d4d4d8;margin:8px 0 0;">（此信件為系統自動傳送，請勿回覆）</p>
+    </td></tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>

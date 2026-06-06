@@ -252,6 +252,55 @@ class MailService
         $subject = $params['subject'];
         $templateName = $params['template_name'];
 
+	// --- 1. 判定語系邏輯 ---
+        $isTraditional = false;
+	if (!empty($params['from_tw_site'])) {
+            $isTraditional = true;
+        } else {
+            $user = \App\Models\User::where('email', $email)->first();
+            if ($user && in_array($user->remarks, ['TW', 'RAYFISH'])) {
+                $isTraditional = true;
+            }
+        }
+
+	// --- 2. 根據目錄結構映射模板名稱 ---
+        // 如果是繁體，路徑變為 mail.default_tw.模板名 (例如 mail.default_tw.verify)
+        // 如果是簡體，維持原樣 mail.default.模板名 (例如 mail.default.verify)
+	$finalTemplate = $isTraditional ? "mail.default_tw.{$templateName}" : "mail.default.{$templateName}";
+
+        // --- 3. 如果判定為繁體，強行翻譯主旨 (Subject) ---
+        if ($isTraditional) {
+            $subjectMap = [
+		'邮箱验证码' => '認證碼',
+		'邮件登录' => 'Email 認證登入',
+		'您的服务即将到期' => '到期通知',
+		'您的流量已使用 80%' => '流量預警',
+            ];
+            foreach ($subjectMap as $zh => $tw) {
+                if (str_contains($subject, $zh)) {
+                    $subject = str_replace($zh, $tw, $subject);
+                }
+            }
+        }
+
+	// --- 4. 寫入偵錯日誌 (清理掉不存在的變數) ---
+        error_log("!! [MAIL_DEBUG] To: $email | Template: $finalTemplate | Subject: $subject | Result: " . ($isTraditional ? 'TW' : 'CN'));
+
+        // --- 5. 執行發信 ---
+	try {
+            \Illuminate\Support\Facades\Mail::send(
+                $finalTemplate,
+                $params['template_value'] ?? $params,
+                function ($message) use ($email, $subject) {
+                    $message->to($email)->subject($subject);
+                }
+            );
+            error_log("!! [MAIL_SUCCESS] Sent Successfully");
+        } catch (\Exception $e) {
+            // 只有在這裡才能寫 $e->getMessage()，否則會導致 Job FAIL
+            error_log("!! [MAIL_ERROR] Failed: " . $e->getMessage());
+        }
+
         $templateValue = $params['template_value'] ?? [];
         $vars = is_array($templateValue) ? ($templateValue['vars'] ?? []) : [];
         $contentMode = is_array($templateValue) ? ($templateValue['content_mode'] ?? null) : null;
@@ -283,6 +332,7 @@ class MailService
 
         try {
             if ($dbTemplate) {
+                // DB 模板：這裡暫不處理 DB 內的內容翻譯，因為你主要用映射文件
                 $renderVars = self::buildSafeVars($templateValue);
                 $renderedSubject = self::renderPlaceholders($dbTemplate->subject, $renderVars);
                 $renderedContent = self::renderPlaceholders($dbTemplate->content, $renderVars);
@@ -293,7 +343,10 @@ class MailService
                 });
                 $params['template_name'] = 'db:' . $templateName;
             } else {
-                $params['template_name'] = 'mail.default.' . $templateName;
+                // --- 3. 修改：根據語系決定文件模板路徑 ---
+                $prefix = $isTraditional ? 'mail.default_tw.' : 'mail.default.';
+                $params['template_name'] = $prefix . $templateName;
+                
                 Mail::send(
                     $params['template_name'],
                     $params['template_value'],
@@ -309,7 +362,7 @@ class MailService
         }
         $log = [
             'email' => $params['email'],
-            'subject' => $params['subject'],
+            'subject' => $subject, // 使用翻譯後的
             'template_name' => $params['template_name'],
             'error' => $error,
             'config' => config('mail')

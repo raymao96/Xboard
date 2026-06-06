@@ -20,13 +20,12 @@
             <tr><td style="font-size:15px;color:#52525b;line-height:1.7;padding-bottom:12px;">您本月的套餐流量已使用 <strong style="color:#18181b;">80%</strong>。</td></tr>
             <tr><td style="font-size:15px;color:#52525b;line-height:1.7;padding-bottom:28px;">请合理安排使用，避免提前耗尽。如需更多流量，可前往面板升级套餐。</td></tr>
             <tr><td align="center">
-                <a href="{{$url}}" style="display:inline-block;background:#18181b;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;padding:12px 28px;border-radius:8px;">查看用量</a>
+                <a href="https://traveler.rapps.click" style="display:inline-block;background:#18181b;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;padding:12px 28px;border-radius:8px;">查看用量</a>
             </td></tr>
         </table>
     </td></tr>
     <!-- Footer -->
     <tr><td style="padding-top:24px;text-align:center;">
-        <a href="{{$url}}" style="font-size:13px;color:#a1a1aa;text-decoration:none;">{{$url}}</a>
         <p style="font-size:12px;color:#d4d4d8;margin:8px 0 0;">此邮件由系统自动发送，请勿直接回复。</p>
     </td></tr>
 </table>
