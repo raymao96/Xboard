@@ -150,7 +150,8 @@ class RegisterService
         $email = $request->input('email');
         $password = $request->input('password');
         $inviteCode = $request->input('invite_code');
-
+        $host = $request->getSchemeAndHttpHost();
+	
         // 处理邀请码获取邀请人ID
         $inviteUserId = null;
         if ($inviteCode) {
@@ -163,6 +164,7 @@ class RegisterService
             'email' => $email,
             'password' => $password,
             'invite_user_id' => $inviteUserId,
+	    'host' => $host,
         ]);
 
         // 保存用户
