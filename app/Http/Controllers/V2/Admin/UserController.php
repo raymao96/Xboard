@@ -113,6 +113,10 @@ class UserController extends Controller
 
         [$operator, $filterValue] = explode(':', $value, 2);
 
+	// 处理余额单位转换 (元 -> 分)
+        if (in_array($field, ['balance', 'commission_balance']) && is_numeric($filterValue)) {
+            $filterValue = (float)$filterValue * 100;
+	}
         // 转换数字字符串为适当的类型
         if (is_numeric($filterValue)) {
             $filterValue = strpos($filterValue, '.') !== false
