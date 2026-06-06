@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>网站通知</title>
+<title>News</title>
 </head>
 <body style="margin:0;padding:0;background-color:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f5;padding:40px 20px;">
@@ -16,16 +16,16 @@
     <!-- Card -->
     <tr><td style="background:#ffffff;border-radius:12px;border:1px solid #e4e4e7;padding:40px;">
         <table width="100%" cellpadding="0" cellspacing="0">
-            <tr><td style="font-size:22px;font-weight:700;color:#18181b;padding-bottom:8px;">网站通知</td></tr>
+            <tr><td style="font-size:22px;font-weight:700;color:#18181b;padding-bottom:8px;">Dear</td></tr>
             <tr><td style="font-size:15px;color:#52525b;line-height:1.7;padding-bottom:28px;">{!! nl2br($content) !!}</td></tr>
             <tr><td align="center">
-                <a href="https://traveler.rapps.click" style="display:inline-block;background:#18181b;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;padding:12px 28px;border-radius:8px;">前往查看</a>
+                <a href="https://tw.getrapps.org" style="display:inline-block;background:#18181b;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;padding:12px 28px;border-radius:8px;">瀏覽官網</a>
             </td></tr>
         </table>
     </td></tr>
     <!-- Footer -->
     <tr><td style="padding-top:24px;text-align:center;">
-        <p style="font-size:12px;color:#d4d4d8;margin:8px 0 0;">此邮件由系统自动发送，请勿直接回复。</p>
+        <p style="font-size:12px;color:#d4d4d8;margin:8px 0 0;">（此信件為系統自動傳送，請勿回覆）</p>
     </td></tr>
 </table>
 </td></tr>

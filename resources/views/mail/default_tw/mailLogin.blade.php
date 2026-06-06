@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>网站通知</title>
+<title>Email 認證登入</title>
 </head>
 <body style="margin:0;padding:0;background-color:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f5;padding:40px 20px;">
@@ -16,16 +16,17 @@
     <!-- Card -->
     <tr><td style="background:#ffffff;border-radius:12px;border:1px solid #e4e4e7;padding:40px;">
         <table width="100%" cellpadding="0" cellspacing="0">
-            <tr><td style="font-size:22px;font-weight:700;color:#18181b;padding-bottom:8px;">网站通知</td></tr>
-            <tr><td style="font-size:15px;color:#52525b;line-height:1.7;padding-bottom:28px;">{!! nl2br($content) !!}</td></tr>
-            <tr><td align="center">
-                <a href="https://traveler.rapps.click" style="display:inline-block;background:#18181b;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;padding:12px 28px;border-radius:8px;">前往查看</a>
+            <tr><td style="font-size:22px;font-weight:700;color:#18181b;padding-bottom:8px;">Email 認證登入</td></tr>
+            <tr><td style="font-size:15px;color:#52525b;line-height:1.7;padding-bottom:28px;">您正在登入 {{$name}}。請在 5 分鐘內點按下方連結以授權登入，如果您未授權此登入，請忽略此信件。</td></tr>
+            <tr><td align="center" style="padding-bottom:28px;">
+                <a href="{{$link}}" style="display:inline-block;background:#18181b;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;padding:14px 36px;border-radius:8px;">確認登入</a>
             </td></tr>
+            <tr><td style="font-size:13px;color:#71717a;line-height:1.5;word-break:break-all;padding-top:8px;">{{$link}}</td></tr>
         </table>
     </td></tr>
     <!-- Footer -->
     <tr><td style="padding-top:24px;text-align:center;">
-        <p style="font-size:12px;color:#d4d4d8;margin:8px 0 0;">此邮件由系统自动发送，请勿直接回复。</p>
+        <p style="font-size:12px;color:#d4d4d8;margin:8px 0 0;">（此信件為系統自動傳送，請勿回覆）</p>
     </td></tr>
 </table>
 </td></tr>

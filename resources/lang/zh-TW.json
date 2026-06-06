@@ -139,7 +139,7 @@
     "traffic_reset.reset_type.purchase": "購買重置包",
     "traffic_reset.source.auto": "自動觸發",
     "traffic_reset.source.manual": "手動觸發",
-    "traffic_reset.source.api": "API調用",
+    "traffic_reset.source.api": "API 調用",
     "traffic_reset.source.cron": "定時任務",
     "traffic_reset.source.user_access": "用戶訪問",
     "traffic_reset.reset_success": "流量重置成功",
