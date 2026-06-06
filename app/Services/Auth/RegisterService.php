@@ -153,7 +153,8 @@ class RegisterService
         $email = User::normalizeEmail((string) $request->input('email'));
         $password = $request->input('password');
         $inviteCode = $request->input('invite_code');
-
+        $host = $request->getSchemeAndHttpHost();
+	
         // 处理邀请码获取邀请人ID
         $inviteUserId = null;
         if ($inviteCode) {
@@ -166,6 +167,7 @@ class RegisterService
             'email' => $email,
             'password' => $password,
             'invite_user_id' => $inviteUserId,
+	    'host' => $host,
         ]);
 
         // The unique index is the final guard against concurrent registrations.
