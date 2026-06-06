@@ -20,13 +20,12 @@
             <tr><td style="font-size:15px;color:#52525b;line-height:1.7;padding-bottom:12px;">您的订阅服务将在 <strong style="color:#18181b;">24 小时</strong>内到期。</td></tr>
             <tr><td style="font-size:15px;color:#52525b;line-height:1.7;padding-bottom:28px;">为避免服务中断，请及时续费。如您已完成续费，请忽略此提醒。</td></tr>
             <tr><td align="center">
-                <a href="{{$url}}" style="display:inline-block;background:#18181b;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;padding:12px 28px;border-radius:8px;">立即续费</a>
+                <a href="https://traveler.rapps.click" style="display:inline-block;background:#18181b;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;padding:12px 28px;border-radius:8px;">立即续费</a>
             </td></tr>
         </table>
     </td></tr>
     <!-- Footer -->
     <tr><td style="padding-top:24px;text-align:center;">
-        <a href="{{$url}}" style="font-size:13px;color:#a1a1aa;text-decoration:none;">{{$url}}</a>
         <p style="font-size:12px;color:#d4d4d8;margin:8px 0 0;">此邮件由系统自动发送，请勿直接回复。</p>
     </td></tr>
 </table>

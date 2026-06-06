@@ -43,8 +43,15 @@ class CommController extends Controller
         if (Cache::get(CacheKey::get('LAST_SEND_EMAIL_VERIFY_TIMESTAMP', $email))) {
             return $this->fail([400, __('Email verification code has been sent, please request again later')]);
         }
-        $code = rand(100000, 999999);
-        $subject = admin_setting('app_name', 'XBoard') . __('Email verification code');
+	$code = rand(100000, 999999);
+
+	// --- 刪除 Email 標題中的 AppName ---
+	//$subject = admin_setting('app_name', 'XBoard') . __('Email verification code');
+	$subject = __('Email verification code');
+
+	// --- 新增：判定是否來自繁體站點 ---
+        $currentHost = $request->header('host');
+	$appHost = parse_url(config('app.url'), PHP_URL_HOST);
 
         SendEmailJob::dispatch([
             'email' => $email,
@@ -54,8 +61,9 @@ class CommController extends Controller
                 'name' => admin_setting('app_name', 'XBoard'),
                 'code' => $code,
                 'url' => admin_setting('app_url')
-            ]
-        ]);
+	    ],
+	    'from_tw_site' => (request()->header('host') === parse_url(config('app.url'), PHP_URL_HOST) || str_contains(request()->header('host') ?? '', 'tw.'))
+	]);
 
         Cache::put(CacheKey::get('EMAIL_VERIFY_CODE', $email), $code, 300);
         Cache::put(CacheKey::get('LAST_SEND_EMAIL_VERIFY_TIMESTAMP', $email), time(), 60);

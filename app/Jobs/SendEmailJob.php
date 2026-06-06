@@ -34,9 +34,26 @@ class SendEmailJob implements ShouldQueue
      */
     public function handle()
     {
-        $mailLog = MailService::sendEmail($this->params);
-        if ($mailLog['error']) {
-            $this->release(); //发送失败将触发重试
+	// --- 1. 新增攔截邏輯 ---
+        if (isset($this->params['email'])) {
+            $isBanned = \Illuminate\Support\Facades\DB::table('v2_user')
+                ->where('email', $this->params['email'])
+                ->where('banned', 1)
+                ->exists();
+
+            if ($isBanned) {
+                // 如果是被封禁用戶，記錄一下並直接結束任務
+                error_log("!! [MAIL_BLOCK] User {$this->params['email']} is banned. Job canceled.");
+                return; 
+            }
+        }
+
+	// --- 2. 原有的發信邏輯 ---
+	$mailLog = MailService::sendEmail($this->params);
+
+	// 如果 MailService 回傳了錯誤，則重新放回隊列重試
+        if (isset($mailLog['error']) && $mailLog['error']) {
+            $this->release();
         }
     }
 }

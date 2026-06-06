@@ -90,18 +90,29 @@ class TicketService
     // 半小时内不再重复通知
     private function sendEmailNotify(Ticket $ticket, TicketMessage $ticketMessage)
     {
-        $user = User::find($ticket->user_id);
+	$user = User::find($ticket->user_id);
+	
+	// --- 1. 直接根據備註判定語系 ---
+        $isTw = ($user && in_array($user->remarks, ['TW', 'RAYFISH']));
+
         $cacheKey = 'ticket_sendEmailNotify_' . $ticket->user_id;
         if (!Cache::get($cacheKey)) {
             Cache::put($cacheKey, 1, 1800);
+
+	    // --- 2. 準備語系文字 ---
+            $subject = $isTw ? '您的問題有新回覆' : '您的工单得到了回复';
+            $labelSubject = $isTw ? '主題' : '主题';
+            $labelReply = $isTw ? '回覆內容' : '回复内容';
+
             SendEmailJob::dispatch([
                 'email' => $user->email,
-                'subject' => '您在' . admin_setting('app_name', 'XBoard') . '的工单得到了回复',
+                'subject' => $subject,
                 'template_name' => 'notify',
                 'template_value' => [
                     'name' => admin_setting('app_name', 'XBoard'),
                     'url' => admin_setting('app_url'),
-                    'content' => "主题：{$ticket->subject}\r\n回复内容：{$ticketMessage->message}"
+		    // --- 3. 組裝內容 ---
+                    'content' => "{$labelSubject}：{$ticket->subject}\r\n{$labelReply}：{$ticketMessage->message}"
                 ]
             ]);
         }
