@@ -8,8 +8,9 @@
     "Insufficient commission balance": "推广佣金余额不足",
     "Transfer failed": "划转失败",
     "Ticket does not exist": "工单不存在",
-    "There are other unresolved tickets": "存在其它工单尚未处理",
+    "There are other unresolved tickets": "存在未关闭的工单",
     "Failed to open ticket": "工单创建失败",
+    "Failed to create ticket message": "工单消息创建失败",
     "Message cannot be empty": "消息不能为空",
     "The ticket is closed and cannot be replied": "工单已关闭，无法回复",
     "Please wait for the technical enginneer to reply": "请等待技术支持回复",
@@ -144,5 +145,10 @@
     "traffic_reset.source.user_access": "用户访问",
     "traffic_reset.reset_success": "流量重置成功",
     "traffic_reset.reset_failed": "流量重置失败，请查看日志获取详细信息",
-    "traffic_reset.user_cannot_reset": "该用户当前不能重置流量（用户未激活或无有效套餐）"
+    "traffic_reset.user_cannot_reset": "该用户当前不能重置流量（用户未激活或无有效套餐）",
+    "stripe.error.currency_conversion_failed": "货币转换失败，请稍后重试",
+    "stripe.error.amount_too_small": "支付金额过小，最小金额为",
+    "stripe.error.secret_key_not_configured": "Stripe Secret Key 未配置",
+    "stripe.error.gateway_error": "支付网关错误：",
+    "stripe.error.payment_failed": "支付处理失败："
 }
