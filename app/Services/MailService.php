@@ -287,6 +287,7 @@ class MailService
         error_log("!! [MAIL_DEBUG] To: $email | Template: $finalTemplate | Subject: $subject | Result: " . ($isTraditional ? 'TW' : 'CN'));
 
         // --- 5. 執行發信 ---
+	$error = null; // 必須先初始化，否則下面 Log 會報錯
 	try {
             \Illuminate\Support\Facades\Mail::send(
                 $finalTemplate,
@@ -301,72 +302,14 @@ class MailService
             error_log("!! [MAIL_ERROR] Failed: " . $e->getMessage());
         }
 
-        $templateValue = $params['template_value'] ?? [];
-        $vars = is_array($templateValue) ? ($templateValue['vars'] ?? []) : [];
-        $contentMode = is_array($templateValue) ? ($templateValue['content_mode'] ?? null) : null;
-
-        if (is_array($vars) && !empty($vars)) {
-            $subject = self::renderPlaceholders((string) $subject, $vars);
-
-            if (is_array($templateValue) && isset($templateValue['content']) && is_string($templateValue['content'])) {
-                $templateValue['content'] = self::renderPlaceholders($templateValue['content'], $vars);
-            }
-        }
-
-        if ($contentMode === 'text' && is_array($templateValue) && isset($templateValue['content']) && is_string($templateValue['content'])) {
-            $templateValue['content'] = e($templateValue['content']);
-        }
-
-        $params['template_value'] = $templateValue;
-
-        // Check for DB template override (cached to avoid per-email queries in bulk sends).
-        // Cache 'none' sentinel for templates that don't exist in DB.
-        $cacheKey = "mail_template:{$templateName}";
-        $cached = Cache::get($cacheKey);
-        if ($cached === null) {
-            $dbTemplate = MailTemplate::where('name', $templateName)->first();
-            Cache::put($cacheKey, $dbTemplate ?: 'none', 3600);
-        } else {
-            $dbTemplate = ($cached === 'none') ? null : $cached;
-        }
-
-        try {
-            if ($dbTemplate) {
-                // DB 模板：這裡暫不處理 DB 內的內容翻譯，因為你主要用映射文件
-                $renderVars = self::buildSafeVars($templateValue);
-                $renderedSubject = self::renderPlaceholders($dbTemplate->subject, $renderVars);
-                $renderedContent = self::renderPlaceholders($dbTemplate->content, $renderVars);
-                $subject = $renderedSubject ?: $subject;
-
-                Mail::html($renderedContent, function ($message) use ($email, $subject) {
-                    $message->to($email)->subject($subject);
-                });
-                $params['template_name'] = 'db:' . $templateName;
-            } else {
-                // --- 3. 修改：根據語系決定文件模板路徑 ---
-                $prefix = $isTraditional ? 'mail.default_tw.' : 'mail.default.';
-                $params['template_name'] = $prefix . $templateName;
-                
-                Mail::send(
-                    $params['template_name'],
-                    $params['template_value'],
-                    function ($message) use ($email, $subject) {
-                        $message->to($email)->subject($subject);
-                    }
-                );
-            }
-            $error = null;
-        } catch (\Exception $e) {
-            Log::error($e);
-            $error = $e->getMessage();
-        }
+	// --- 6. 記錄日誌 ---
         $log = [
-            'email' => $params['email'],
-            'subject' => $subject, // 使用翻譯後的
-            'template_name' => $params['template_name'],
+            'email' => $email,
+            'subject' => $subject,
+            'template_name' => $finalTemplate, // 記錄你實際發出的那個模板名
             'error' => $error,
-            'config' => config('mail')
-        ];
+            'config' => [] // 建議先給空陣列，避免 config 內容過大導致資料庫寫入失敗
+	];
         MailLog::create($log);
         return $log;
     }
