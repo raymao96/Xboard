@@ -20,13 +20,19 @@ class TicketController extends Controller
     public function fetch(Request $request)
     {
         if ($request->input('id')) {
+	    // 【修正重點 1】：先取對象，拆開 load，避免 null 崩潰
             $ticket = Ticket::where('id', $request->input('id'))
                 ->where('user_id', $request->user()->id)
-                ->first()
-                ->load('message');
+                ->first();
+
+            // 【修正重點 2】：判斷是否存在，若不存在則安靜返回，不彈出紅框報錯
             if (!$ticket) {
-                return $this->fail([400, __('Ticket does not exist')]);
+                return $this->success();
             }
+
+            // 確定存在後才載入關聯
+            $ticket->load('message');
+
             $ticket['message'] = TicketMessage::where('ticket_id', $ticket->id)->get();
             $ticket['message']->each(function ($message) use ($ticket) {
                 $message['is_me'] = ($message['user_id'] == $ticket->user_id);
