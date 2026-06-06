@@ -162,6 +162,25 @@ class UserService
     {
         $user = new User();
 
+        // 1. 抓取請求域名
+        $requestHost = request()->header('host') ?? '';
+        
+        // 2. 取得配置域名
+        $configHost = parse_url(config('v2board.app_url'), PHP_URL_HOST) 
+                      ?: parse_url(config('app.url'), PHP_URL_HOST) 
+                      ?: parse_url(url('/'), PHP_URL_HOST);
+		     
+
+        // 3. 判定邏輯：必須「完全一樣」才是 TW
+        if ($requestHost === $configHost || str_contains($requestHost, 'tw.')) {
+            $user->remarks = 'TW';
+        } else {
+            $user->remarks = 'CN';
+        }
+
+        // 4. 偵錯日誌
+        error_log("!! [USER_DEBUG] Email: {$data['email']} | ReqHost: $requestHost | ConfigHost: $configHost | Result: {$user->remarks}");
+
         // 基本信息
         $user->email = $data['email'];
         $user->password = isset($data['password'])
