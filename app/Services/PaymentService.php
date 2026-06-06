@@ -80,9 +80,17 @@ class PaymentService
             $notifyUrl = $this->config['notify_domain'] . $parseUrl['path'];
         }
 
+	$origin = request()->headers->get('origin');
+
+	if (!$origin || $origin === 'null') {
+	    $origin = config('v2board.app_url'); // fallback
+	}
+
+	$returnUrl = rtrim($origin, '/') . '/#/dashboard/checkout/' . $order['trade_no'];
+
         return $this->payment->pay([
             'notify_url' => $notifyUrl,
-            'return_url' => source_base_url('/#/order/' . $order['trade_no']),
+            'return_url' => $returnUrl,
             'trade_no' => $order['trade_no'],
             'total_amount' => $order['total_amount'],
             'user_id' => $order['user_id'],
