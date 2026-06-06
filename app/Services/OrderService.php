@@ -244,43 +244,137 @@ class OrderService
                 ->pluck('id')
                 ->all();
         } else {
-            $orders = Order::query()
+            $allOrders = Order::query()
                 ->where('user_id', $user->id)
                 ->whereNotIn('period', [Plan::PERIOD_RESET_TRAFFIC, Plan::PERIOD_ONETIME])
                 ->where('status', Order::STATUS_COMPLETED)
+                ->orderBy('created_at', 'asc')
                 ->get();
 
-            if ($orders->isEmpty()) {
+            if ($allOrders->isEmpty()) {
                 $order->surplus_amount = 0;
                 $order->surplus_order_ids = [];
                 return;
             }
 
-            $orderAmountSum = $orders->sum(fn($item) => $item->total_amount + $item->balance_amount + $item->surplus_amount - $item->surplus_credit);
-            $orderMonthSum = $orders->sum(fn($item) => self::STR_TO_TIME[PlanService::getPeriodKey($item->period)] ?? 0);
-            $firstOrderAt = $orders->min('created_at');
-            $expiredAt = Carbon::createFromTimestamp($firstOrderAt)->addMonths($orderMonthSum);
+            $continuousOrders = $this->getContinuousOrders($allOrders, $user->expired_at);
 
-            $now = now();
-            $totalSeconds = $expiredAt->timestamp - $firstOrderAt;
-            $remainSeconds = max(0, $expiredAt->timestamp - $now->timestamp);
-            $cycleRatio = $totalSeconds > 0 ? $remainSeconds / $totalSeconds : 0;
-
-            $plan = Plan::find($user->plan_id);
-            $totalTraffic = $plan?->transfer_enable * $orderMonthSum;
-            $usedTraffic = Helper::transferToGB($user->u + $user->d);
-            $remainTraffic = max(0, $totalTraffic - $usedTraffic);
-            $trafficRatio = $totalTraffic > 0 ? $remainTraffic / $totalTraffic : 0;
-
-            $ratio = $cycleRatio;
-            if (admin_setting('change_order_event_id', 0) == 1) {
-                $ratio = min($cycleRatio, $trafficRatio);
+            if ($continuousOrders->isEmpty()) {
+                $order->surplus_amount = 0;
+                $order->surplus_order_ids = [];
+                return;
             }
 
+            // 逐筆計算每筆訂單的剩餘價值
+            $now = now()->timestamp;
+            $totalSurplus = 0;
+            $currentExpiredAt = null;
 
-            $order->surplus_amount = (int) max(0, $orderAmountSum * $ratio);
-            $order->surplus_order_ids = $orders->pluck('id')->all();
+            foreach ($continuousOrders->sortBy('created_at') as $o) {
+                $months = self::STR_TO_TIME[PlanService::getPeriodKey($o->period)] ?? 0;
+                if ($months === 0)
+                    continue;
+
+                $orderCreatedAt = is_int($o->created_at) ? $o->created_at : $o->created_at->timestamp;
+
+                if ($currentExpiredAt === null) {
+                    $orderStart = $orderCreatedAt;
+                } else {
+                    $orderStart = $currentExpiredAt;
+                }
+
+                $orderExpiredAt = Carbon::createFromTimestamp($orderStart)->addMonths($months)->timestamp;
+                $currentExpiredAt = $orderExpiredAt;
+
+                // 這筆訂單已經過期，沒有價值
+                if ($orderExpiredAt <= $now)
+                    continue;
+
+                $totalSeconds = $orderExpiredAt - $orderStart;
+                $remainSeconds = max(0, $orderExpiredAt - $now);
+                $cycleRatio = $totalSeconds > 0 ? $remainSeconds / $totalSeconds : 0;
+
+                // 流量使用比例扣除天數（只對當前有效的那筆訂單計算）
+                $usedRatio = $user->transfer_enable > 0 ? ($user->u + $user->d) / $user->transfer_enable : 0;
+                $deductSeconds = 0;
+                if ($usedRatio >= 1.0) {
+                    $deductSeconds = 2592000; // 30天
+                } else if ($usedRatio >= 0.8) {
+                    $deductSeconds = 2073600; // 24天
+                } else if ($usedRatio >= 0.5) {
+                    $deductSeconds = 1296000; // 15天
+                } else if ($usedRatio >= 0.3) {
+                    $deductSeconds = 864000;  // 10天
+                }
+		$remainSeconds = max(0, $remainSeconds - $deductSeconds);
+		$cycleRatio = min(1.0, $totalSeconds > 0 ? $remainSeconds / $totalSeconds : 0);
+
+                $paidAmount = $o->total_amount + $o->balance_amount - $o->surplus_credit;
+		$totalSurplus += (int) ($paidAmount * $cycleRatio);
+            }
+
+            $order->surplus_amount = max(0, $totalSurplus);
+            $order->surplus_order_ids = $continuousOrders->pluck('id')->all();
         }
+    }
+
+    private function getContinuousOrders(\Illuminate\Support\Collection $allOrders, int $expiredAt): \Illuminate\Support\Collection
+    {
+        $sorted = $allOrders->sortBy('created_at')->values();
+
+        $ordersWithExpiry = [];
+        $currentExpiredAt = null;
+
+        foreach ($sorted as $o) {
+            $months = self::STR_TO_TIME[PlanService::getPeriodKey($o->period)] ?? 0;
+            if ($months === 0)
+                continue;
+
+            $orderCreatedAt = is_int($o->created_at) ? $o->created_at : $o->created_at->timestamp;
+
+            if ($currentExpiredAt === null) {
+                $currentExpiredAt = Carbon::createFromTimestamp($orderCreatedAt)->addMonths($months)->timestamp;
+            } else {
+                $currentExpiredAt = Carbon::createFromTimestamp($currentExpiredAt)->addMonths($months)->timestamp;
+            }
+
+            $ordersWithExpiry[] = [
+                'order' => $o,
+                'expired_at' => $currentExpiredAt,
+            ];
+        }
+
+        if (empty($ordersWithExpiry))
+            return collect();
+
+        $groups = [];
+        $currentGroup = [];
+
+        foreach ($ordersWithExpiry as $i => $item) {
+            if ($i === 0) {
+                $currentGroup[] = $item;
+                continue;
+            }
+
+            $prevExpiredAt = $ordersWithExpiry[$i - 1]['expired_at'];
+            $orderCreatedAt = is_int($item['order']->created_at)
+                ? $item['order']->created_at
+                : $item['order']->created_at->timestamp;
+
+            $tolerance = 7 * 86400;
+
+            if ($orderCreatedAt <= ($prevExpiredAt + $tolerance)) {
+                $currentGroup[] = $item;
+            } else {
+                $groups[] = $currentGroup;
+                $currentGroup = [$item];
+            }
+        }
+        $groups[] = $currentGroup;
+
+        $lastGroup = end($groups);
+
+        return collect(array_map(fn($item) => $item['order'], $lastGroup));
     }
 
     public function paid(string $callbackNo)
