@@ -42,11 +42,11 @@ class TicketService
     {
         $ticket = Ticket::where('id', $ticketId)->first();
         if (!$ticket) {
-            throw new ApiException('工单不存在');
+            throw new ApiException(__('Ticket does not exist'));
         }
         $ticketMessage = $this->reply($ticket, $message, $userId);
         if (!$ticketMessage) {
-            throw new ApiException('工单回复失败');
+            throw new ApiException(__('Ticket reply failed'));
         }
         HookManager::call('ticket.reply.admin.after', [$ticket, $ticketMessage]);
         $this->sendEmailNotify($ticket, $ticketMessage);
@@ -58,7 +58,7 @@ class TicketService
             DB::beginTransaction();
             if (Ticket::where('status', 0)->where('user_id', $userId)->lockForUpdate()->first()) {
                 DB::rollBack();
-                throw new ApiException('存在未关闭的工单');
+                throw new ApiException(__('There are other unresolved tickets'));
             }
             $ticket = Ticket::create([
                 'user_id' => $userId,
@@ -68,7 +68,7 @@ class TicketService
                 'last_reply_user_id' => $userId,
             ]);
             if (!$ticket) {
-                throw new ApiException('工单创建失败');
+                throw new ApiException(__('Failed to open ticket'));
             }
             $ticketMessage = TicketMessage::create([
                 'user_id' => $userId,
@@ -77,7 +77,7 @@ class TicketService
             ]);
             if (!$ticketMessage) {
                 DB::rollBack();
-                throw new ApiException('工单消息创建失败');
+                throw new ApiException(__('Failed to create ticket message'));
             }
             DB::commit();
             return $ticket;
