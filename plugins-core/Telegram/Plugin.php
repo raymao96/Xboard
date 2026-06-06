@@ -84,7 +84,25 @@ class Plugin extends AbstractPlugin
     $money = $user->balance / 100;
     $affmoney = $user->commission_balance / 100;
     $plan = $user->plan;
-    $ip = request()?->ip() ?? '';
+
+    // 取得發工單用戶真實所在位置 IP
+    $ip = '';
+    if (request()) {
+	    $forwardedFor = request()->header('X-Forwarded-For');
+    
+	    if ($forwardedFor) {
+	        $ips = explode(',', $forwardedFor);
+	        $ip = trim($ips[0]);
+	    }
+    
+	    if (empty($ip) || !filter_var($ip, FILTER_VALIDATE_IP)) {
+        	$ip = request()->header('X-Real-IP') ?? request()->ip();
+	    }
+    
+	    $ip = trim($ip);
+    }
+    // End
+
     $region = $ip ? (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) ? (new \Ip2Region())->simple($ip) : 'NULL') : '';
     $TGmessage = "📮 *工单提醒* #{$ticket->id}\n";
     $TGmessage .= "━━━━━━━━━━━━━━━━━━━━\n";
