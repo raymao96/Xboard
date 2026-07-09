@@ -1,0 +1,44 @@
+stages:
+  - build
+
+variables:
+  GIT_DEPTH: "0"
+  DOCKER_TLS_CERTDIR: "/certs"
+
+docker-build:
+  stage: build
+  image: docker:27
+  services:
+    - docker:27-dind
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master" || $CI_COMMIT_BRANCH == "new-dev"'
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+    - docker run --rm --privileged tonistiigi/binfmt --install arm64,amd64
+    - docker context create tls-environment
+    - docker buildx create tls-environment --name mybuilder --driver docker-container --driver-opt network=host --use
+    - docker buildx inspect --bootstrap
+  script:
+    - VERSION=$(git describe --tags --always 2>/dev/null || echo "$CI_COMMIT_SHORT_SHA")
+    - APPVER=$(date '+%Y%m%d')-$CI_COMMIT_SHORT_SHA
+    - sed -i "s/'version' => '.*'/'version' => '$APPVER'/g" config/app.php
+    - |
+      TAGS="-t ${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_SLUG} -t ${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHORT_SHA}"
+      if [ "$CI_COMMIT_BRANCH" = "master" ]; then
+        TAGS="$TAGS -t ${CI_REGISTRY_IMAGE}:latest -t ${CI_REGISTRY_IMAGE}:new -t ${CI_REGISTRY_IMAGE}:${VERSION}"
+      fi
+    - >
+      docker buildx build
+      --platform linux/amd64,linux/arm64
+      --push
+      $TAGS
+      --label org.opencontainers.image.source="${CI_PROJECT_URL}"
+      --label org.opencontainers.image.revision="${CI_COMMIT_SHA}"
+      --build-arg CACHEBUST="${CI_COMMIT_SHA}"
+      --build-arg REPO_URL="${CI_PROJECT_URL}"
+      --build-arg BRANCH_NAME="${CI_COMMIT_REF_NAME}"
+      --cache-from type=registry,ref=${CI_REGISTRY_IMAGE}:buildcache
+      --cache-to type=registry,ref=${CI_REGISTRY_IMAGE}:buildcache,mode=max
+      --provenance=false
+      .
