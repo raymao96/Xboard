@@ -412,6 +412,10 @@ class OrderService
                     throw new \Exception('Failed to add balance.');
                 }
             }
+            if ($order->surplus_order_ids) {
+                Order::whereIn('id', $order->surplus_order_ids)
+                    ->update(['status' => Order::STATUS_COMPLETED]);
+            }
             DB::commit();
             HookManager::call('order.cancel.after', $order);
             return true;
