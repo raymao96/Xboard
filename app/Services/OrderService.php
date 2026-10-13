@@ -306,11 +306,22 @@ class OrderService
                 } else if ($usedRatio >= 0.3) {
                     $deductSeconds = 864000;  // 10天
                 }
-		$remainSeconds = max(0, $remainSeconds - $deductSeconds);
-		$cycleRatio = min(1.0, $totalSeconds > 0 ? $remainSeconds / $totalSeconds : 0);
+                $remainSeconds = max(0, $remainSeconds - $deductSeconds);
+                $cycleRatio = min(1.0, $totalSeconds > 0 ? $remainSeconds / $totalSeconds : 0);
 
-                $paidAmount = $o->total_amount + $o->balance_amount - $o->surplus_credit;
-		$totalSurplus += (int) ($paidAmount * $cycleRatio);
+                // 判斷 surplus_amount 是否從週期性訂單繼承來的
+                $surplusFromPeriodic = false;
+                if (!empty($o->surplus_order_ids)) {
+                    $onetimeCount = Order::whereIn('id', $o->surplus_order_ids)
+                        ->whereIn('period', [Plan::PERIOD_ONETIME])
+                        ->count();
+                    $surplusFromPeriodic = ($onetimeCount === 0);
+                }
+
+                $paidAmount = $o->total_amount + $o->balance_amount
+                    + ($surplusFromPeriodic ? ($o->surplus_amount ?? 0) : 0)
+                    - $o->surplus_credit;
+                $totalSurplus += (int) ($paidAmount * $cycleRatio);
             }
 
             $order->surplus_amount = max(0, $totalSurplus);
