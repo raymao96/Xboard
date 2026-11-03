@@ -1,3 +1,4 @@
 [submodule "public/assets/admin"]
 	path = public/assets/admin
 	url = https://gitlab.com/raymao96/xboard-admin-dist.git
+        branch = main

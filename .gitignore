@@ -32,3 +32,7 @@ compose.yaml
 compose.host.yaml
 compose.split.yaml
 .scribe
+
+# AI
+*.md
+.opencode/

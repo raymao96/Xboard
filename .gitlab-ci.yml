@@ -35,7 +35,7 @@ docker-build:
       $TAGS
       --label org.opencontainers.image.source="${CI_PROJECT_URL}"
       --label org.opencontainers.image.revision="${CI_COMMIT_SHA}"
-      --build-arg CACHEBUST="${CI_COMMIT_SHA}"
+      --build-arg CACHEBUST="$(date +%s)"
       --build-arg REPO_URL="${CI_PROJECT_URL}"
       --build-arg BRANCH_NAME="${CI_COMMIT_REF_NAME}"
       --cache-from type=registry,ref=${CI_REGISTRY_IMAGE}:buildcache
