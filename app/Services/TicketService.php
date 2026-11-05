@@ -44,9 +44,20 @@ class TicketService
         if (!$ticket) {
             throw new ApiException(__('Ticket does not exist'));
         }
+        $isClosed = (int) $ticket->status === Ticket::STATUS_CLOSED;
+        if ($isClosed && Ticket::where('status', Ticket::STATUS_OPENING)
+            ->where('user_id', $ticket->user_id)
+            ->where('id', '!=', $ticket->id)
+            ->exists()) {
+            throw new ApiException(__('There are other unresolved tickets'));
+        }
         $ticketMessage = $this->reply($ticket, $message, $userId);
         if (!$ticketMessage) {
             throw new ApiException(__('Ticket reply failed'));
+        }
+        if ($isClosed) {
+            $ticket->status = Ticket::STATUS_OPENING;
+            $ticket->save();
         }
         HookManager::call('ticket.reply.admin.after', [$ticket, $ticketMessage]);
         $this->sendEmailNotify($ticket, $ticketMessage);
