@@ -63,6 +63,27 @@ class TicketService
         $this->sendEmailNotify($ticket, $ticketMessage);
     }
 
+    public function openByAdmin($ticketId): void
+    {
+        $ticket = Ticket::where('id', $ticketId)->first();
+        if (!$ticket) {
+            throw new ApiException(__('Ticket does not exist'));
+        }
+        if ((int) $ticket->status !== Ticket::STATUS_CLOSED) {
+            throw new ApiException(__('Ticket is not closed'));
+        }
+        if (Ticket::where('status', Ticket::STATUS_OPENING)
+            ->where('user_id', $ticket->user_id)
+            ->where('id', '!=', $ticket->id)
+            ->exists()) {
+            throw new ApiException(__('There are other unresolved tickets'));
+        }
+        $ticket->status = Ticket::STATUS_OPENING;
+        if (!$ticket->save()) {
+            throw new ApiException(__('Ticket open failed'));
+        }
+    }
+
     public function createTicket($userId, $subject, $level, $message)
     {
         try {

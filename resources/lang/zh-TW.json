@@ -9,6 +9,8 @@
     "Transfer failed": "無法提領",
     "Ticket does not exist": "查無此聯絡單",
     "There are other unresolved tickets": "您還有未結案的聯絡單",
+    "Ticket is not closed": "本聯絡單尚未結案，無須重新開啟",
+    "Ticket open failed": "無法重開聯絡單",
     "Failed to open ticket": "無法建立聯絡單",
     "Failed to create ticket message": "無法儲存聯絡單內容",
     "Message cannot be empty": "您尚未輸入任何訊息",

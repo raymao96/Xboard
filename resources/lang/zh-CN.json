@@ -9,6 +9,8 @@
     "Transfer failed": "划转失败",
     "Ticket does not exist": "工单不存在",
     "There are other unresolved tickets": "存在未关闭的工单",
+    "Ticket is not closed": "工单未关闭，无需重开",
+    "Ticket open failed": "工单开启失败",
     "Failed to open ticket": "工单创建失败",
     "Failed to create ticket message": "工单消息创建失败",
     "Message cannot be empty": "消息不能为空",

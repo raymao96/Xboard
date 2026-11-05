@@ -45,6 +45,8 @@
     "The ticket is closed and cannot be replied": "Тикет закрыт, ответ невозможен",
     "The user does not exist": "Пользователь не существует",
     "There are other unresolved tickets": "Есть другие нерешённые тикеты",
+    "Ticket is not closed": "Тикет не закрыт, повторное открытие не требуется",
+    "Ticket open failed": "Не удалось открыть тикет повторно",
     "This coupon has expired": "Этот купон истёк",
     "This coupon has not yet started": "Этот купон ещё не начался",
     "This coupon is no longer available": "Этот купон больше недоступен",

@@ -45,6 +45,8 @@
     "The ticket is closed and cannot be replied": "The ticket is closed and cannot be replied",
     "The user does not exist": "The user does not exist",
     "There are other unresolved tickets": "There are other unresolved tickets",
+    "Ticket is not closed": "Ticket is not closed, no need to reopen",
+    "Ticket open failed": "Failed to reopen ticket",
     "This coupon has expired": "This coupon has expired",
     "This coupon has not yet started": "This coupon has not yet started",
     "This coupon is no longer available": "This coupon is no longer available",

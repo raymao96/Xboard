@@ -141,6 +141,18 @@ class TicketController extends Controller
         }
     }
 
+    public function open(Request $request)
+    {
+        $request->validate([
+            'id' => 'required|numeric'
+        ], [
+            'id.required' => '工单ID不能为空'
+        ]);
+        $ticketService = new TicketService();
+        $ticketService->openByAdmin($request->input('id'));
+        return $this->success(true);
+    }
+
     public function show($ticketId)
     {
         $ticket = Ticket::with([
