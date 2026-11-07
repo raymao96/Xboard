@@ -38,6 +38,7 @@ docker-build:
       --build-arg CACHEBUST="$(date +%s)"
       --build-arg REPO_URL="${CI_PROJECT_URL}"
       --build-arg BRANCH_NAME="${CI_COMMIT_REF_NAME}"
+      --build-arg ADMIN_SUBMODULE_URL="https://gitlab.com/raymao96/xboard-admin-dist.git"
       --cache-from type=registry,ref=${CI_REGISTRY_IMAGE}:buildcache
       --cache-to type=registry,ref=${CI_REGISTRY_IMAGE}:buildcache,mode=max
       --provenance=false

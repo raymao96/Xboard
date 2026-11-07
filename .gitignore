@@ -35,4 +35,5 @@ compose.split.yaml
 
 # AI
 *.md
+worklogs/
 .opencode/
