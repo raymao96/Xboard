@@ -3,8 +3,10 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * App\Models\Ticket
@@ -45,6 +47,21 @@ class Ticket extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id', 'id');
+    }
+
+    public function hiddenUser(): HasOne
+    {
+        return $this->hasOne(TicketHiddenUser::class, 'user_id', 'user_id');
+    }
+
+    // Admin-only filtering: never apply this as a global scope.
+    public function scopeAdminVisibility(Builder $query, string $visibility = 'normal'): Builder
+    {
+        return match ($visibility) {
+            'hidden' => $query->whereHas('hiddenUser'),
+            'all' => $query,
+            default => $query->whereDoesntHave('hiddenUser'),
+        };
     }
     
     /**

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\V2\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Ticket;
+use App\Models\TicketHiddenUser;
 use App\Models\User;
 use App\Services\TicketService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -51,7 +52,7 @@ class TicketController extends Controller
      */
     private function fetchTicketById(Request $request)
     {
-        $ticket = Ticket::with('messages', 'user')->find($request->input('id'));
+        $ticket = Ticket::with('messages', 'user')->withExists('hiddenUser as is_hidden')->find($request->input('id'));
 
         if (!$ticket) {
             return $this->fail([400202, '工单不存在']);
@@ -70,7 +71,10 @@ class TicketController extends Controller
      */
     private function fetchTickets(Request $request)
     {
+        $request->validate(['visibility' => 'sometimes|in:normal,hidden,all']);
         $ticketModel = Ticket::with('user')
+            ->withExists('hiddenUser as is_hidden')
+            ->adminVisibility($request->input('visibility', 'normal'))
             ->when($request->has('status'), function ($query) use ($request) {
                 $query->where('status', $request->input('status'));
             })
@@ -102,6 +106,22 @@ class TicketController extends Controller
             'data' => $items,
             'total' => $tickets->total()
         ]);
+    }
+
+    public function visibility(Request $request)
+    {
+        $data = $request->validate([
+            'user_id' => 'required|integer|exists:v2_user,id',
+            'hidden' => 'required|boolean',
+        ]);
+
+        if ($data['hidden']) {
+            TicketHiddenUser::firstOrCreate(['user_id' => $data['user_id']]);
+        } else {
+            TicketHiddenUser::where('user_id', $data['user_id'])->delete();
+        }
+
+        return $this->success(true);
     }
 
     public function reply(Request $request)

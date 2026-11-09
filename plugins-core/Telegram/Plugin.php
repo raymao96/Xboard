@@ -4,6 +4,7 @@ namespace Plugin\Telegram;
 
 use App\Models\Order;
 use App\Models\Ticket;
+use App\Models\TicketHiddenUser;
 use App\Models\User;
 use App\Services\Plugin\AbstractPlugin;
 use App\Services\Plugin\HookManager;
@@ -71,6 +72,10 @@ class Plugin extends AbstractPlugin
       return;
     }
 
+    if (TicketHiddenUser::where('user_id', $ticket->user_id)->exists()) {
+      return;
+    }
+
     $message = $ticket->messages()->latest()->first();
     $user = User::find($ticket->user_id);
     if (!$user)
@@ -123,7 +128,7 @@ class Plugin extends AbstractPlugin
     $TGmessage .= "━━━━━━━━━━━━━━━━━━━━\n";
     $TGmessage .= "📝 *主题*: `" . Helper::escapeMarkdown($ticket->subject) . "`\n";
     $TGmessage .= "💬 *内容*: `" . Helper::escapeMarkdown($message->message) . "`";
-    $this->telegramService->sendMessageWithAdmin($TGmessage, true);
+    $this->telegramService->sendMessageWithAdmin($TGmessage, true, $ticket->user_id);
   }
 
   protected function registerDefaultCommands(): void

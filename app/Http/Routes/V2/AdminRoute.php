@@ -173,6 +173,7 @@ class AdminRoute
                 $router->post('/reply', [TicketController::class, 'reply']);
                 $router->post('/close', [TicketController::class, 'close']);
                 $router->post('/open', [TicketController::class, 'open']);
+                $router->post('/visibility', [TicketController::class, 'visibility']);
             });
 
             // Coupon

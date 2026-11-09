@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Services\TelegramService;
+use App\Models\TicketHiddenUser;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -14,6 +15,7 @@ class SendTelegramJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
     protected $telegramId;
     protected $text;
+    protected ?int $ticketUserId = null;
 
     public $tries = 3;
     public $timeout = 10;
@@ -23,11 +25,12 @@ class SendTelegramJob implements ShouldQueue
      *
      * @return void
      */
-    public function __construct(int $telegramId, string $text)
+    public function __construct(int $telegramId, string $text, ?int $ticketUserId = null)
     {
         $this->onQueue('send_telegram');
         $this->telegramId = $telegramId;
         $this->text = $text;
+        $this->ticketUserId = $ticketUserId;
     }
 
     /**
@@ -37,6 +40,9 @@ class SendTelegramJob implements ShouldQueue
      */
     public function handle()
     {
+        if ($this->ticketUserId !== null && TicketHiddenUser::where('user_id', $this->ticketUserId)->exists()) {
+            return;
+        }
         $telegramService = new TelegramService();
         $telegramService->sendMessage($this->telegramId, $this->text, 'markdown');
     }
