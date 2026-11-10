@@ -16,6 +16,7 @@ class SendTelegramJob implements ShouldQueue
     protected $telegramId;
     protected $text;
     protected ?int $ticketUserId = null;
+    protected string $parseMode = 'markdown';
 
     public $tries = 3;
     public $timeout = 10;
@@ -25,12 +26,13 @@ class SendTelegramJob implements ShouldQueue
      *
      * @return void
      */
-    public function __construct(int $telegramId, string $text, ?int $ticketUserId = null)
+    public function __construct(int $telegramId, string $text, ?int $ticketUserId = null, string $parseMode = 'markdown')
     {
         $this->onQueue('send_telegram');
         $this->telegramId = $telegramId;
         $this->text = $text;
         $this->ticketUserId = $ticketUserId;
+        $this->parseMode = $parseMode;
     }
 
     /**
@@ -44,6 +46,6 @@ class SendTelegramJob implements ShouldQueue
             return;
         }
         $telegramService = new TelegramService();
-        $telegramService->sendMessage($this->telegramId, $this->text, 'markdown');
+        $telegramService->sendMessage($this->telegramId, $this->text, $this->parseMode);
     }
 }

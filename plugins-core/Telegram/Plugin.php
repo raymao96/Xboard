@@ -109,26 +109,27 @@ class Plugin extends AbstractPlugin
     // End
 
     $region = $ip ? (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) ? (new \Ip2Region())->simple($ip) : 'NULL') : '';
-    $TGmessage = "📮 *工单提醒* #{$ticket->id}\n";
+    $escape = static fn($text) => htmlspecialchars((string) $text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    $TGmessage = "📮 <b>工单提醒</b> #" . $escape($ticket->id) . "\n";
     $TGmessage .= "━━━━━━━━━━━━━━━━━━━━\n";
-    $TGmessage .= "📧 邮箱: `{$user->email}`\n";
-    $TGmessage .= "📍 位置: `{$region}`\n";
+    $TGmessage .= "📧 邮箱: <code>" . $escape($user->email) . "</code>\n";
+    $TGmessage .= "📍 位置: <code>" . $escape($region) . "</code>\n";
 
     if ($plan) {
-      $TGmessage .= "📦 套餐: `" . Helper::escapeMarkdown($plan->name) . "`\n";
-      $TGmessage .= "📊 流量: `{$remaining_traffic}G / {$transfer_enable}G` (剩余/总计)\n";
-      $TGmessage .= "⬆️⬇️ 已用: `{$u}G / {$d}G`\n";
-      $TGmessage .= "⏰ 到期: `{$expired_at}`\n";
+      $TGmessage .= "📦 套餐: <code>" . $escape($plan->name) . "</code>\n";
+      $TGmessage .= "📊 流量: <code>{$remaining_traffic}G / {$transfer_enable}G</code> (剩余/总计)\n";
+      $TGmessage .= "⬆️⬇️ 已用: <code>{$u}G / {$d}G</code>\n";
+      $TGmessage .= "⏰ 到期: <code>" . $escape($expired_at) . "</code>\n";
     } else {
-      $TGmessage .= "📦 套餐: `未订购任何套餐`\n";
+      $TGmessage .= "📦 套餐: <code>未订购任何套餐</code>\n";
     }
 
-    $TGmessage .= "💰 余额: `{$money}元`\n";
-    $TGmessage .= "💸 佣金: `{$affmoney}元`\n";
+    $TGmessage .= "💰 余额: <code>{$money}元</code>\n";
+    $TGmessage .= "💸 佣金: <code>{$affmoney}元</code>\n";
     $TGmessage .= "━━━━━━━━━━━━━━━━━━━━\n";
-    $TGmessage .= "📝 *主题*: `" . Helper::escapeMarkdown($ticket->subject) . "`\n";
-    $TGmessage .= "💬 *内容*: `" . Helper::escapeMarkdown($message->message) . "`";
-    $this->telegramService->sendMessageWithAdmin($TGmessage, true, $ticket->user_id);
+    $TGmessage .= "📝 <b>主题</b>: " . $escape($ticket->subject) . "\n";
+    $TGmessage .= "💬 <b>内容</b>: " . $escape($message->message);
+    $this->telegramService->sendMessageWithAdmin($TGmessage, true, $ticket->user_id, 'HTML');
   }
 
   protected function registerDefaultCommands(): void

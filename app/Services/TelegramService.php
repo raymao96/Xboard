@@ -112,7 +112,7 @@ class TelegramService
         return $this->request('deleteMyCommands');
     }
 
-    public function sendMessageWithAdmin(string $message, bool $isStaff = false, ?int $ticketUserId = null): void
+    public function sendMessageWithAdmin(string $message, bool $isStaff = false, ?int $ticketUserId = null, string $parseMode = 'markdown'): void
     {
         $query = User::where('telegram_id', '!=', null);
         $query->where(
@@ -121,7 +121,7 @@ class TelegramService
         );
         $users = $query->get();
         foreach ($users as $user) {
-            SendTelegramJob::dispatch($user->telegram_id, $message, $ticketUserId);
+            SendTelegramJob::dispatch($user->telegram_id, $message, $ticketUserId, $parseMode);
         }
     }
 
