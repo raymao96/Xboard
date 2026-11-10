@@ -299,6 +299,7 @@ class MailService
             error_log("!! [MAIL_SUCCESS] Sent Successfully");
         } catch (\Exception $e) {
             // 只有在這裡才能寫 $e->getMessage()，否則會導致 Job FAIL
+            $error = $e->getMessage() ?: '邮件发送失败';
             error_log("!! [MAIL_ERROR] Failed: " . $e->getMessage());
         }
 
