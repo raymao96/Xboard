@@ -36,7 +36,7 @@ class OrderController extends Controller
     {
         $current = $request->input('current', 1);
         $pageSize = $request->input('pageSize', 10);
-        $orderModel = Order::with('plan:id,name');
+        $orderModel = Order::with(['plan:id,name', 'user:id,remarks']);
 
         if ($request->boolean('is_commission')) {
             $orderModel->whereNotNull('invite_user_id')
@@ -60,7 +60,22 @@ class OrderController extends Controller
             return $orderArray;
         });
 
-        return $this->paginate($paginatedResults);
+        $remarksOptions = User::whereNotNull('remarks')
+            ->where('remarks', '!=', '')
+            ->whereIn('id', Order::select('user_id')->distinct())
+            ->distinct()
+            ->orderBy('remarks')
+            ->pluck('remarks')
+            ->values();
+
+        return response()->json([
+            'total' => $paginatedResults->total(),
+            'current_page' => $paginatedResults->currentPage(),
+            'per_page' => $paginatedResults->perPage(),
+            'last_page' => $paginatedResults->lastPage(),
+            'data' => $paginatedResults->items(),
+            'remarks_options' => $remarksOptions,
+        ]);
     }
 
     private function applyFiltersAndSorts(Request $request, Builder $builder): void
@@ -87,6 +102,39 @@ class OrderController extends Controller
 
     private function buildFilterQuery(Builder $query, string $field, mixed $value): void
     {
+        if ($field === 'user_remarks') {
+            $values = is_array($value) ? $value : [$value];
+            $hasEmpty = in_array('__EMPTY__', $values, true);
+            $specificRemarks = array_values(array_filter(
+                $values,
+                static fn($item) => $item !== '__EMPTY__' && $item !== null && $item !== ''
+            ));
+
+            if ($hasEmpty && !empty($specificRemarks)) {
+                $query->where(function (Builder $subQuery) use ($specificRemarks) {
+                    $subQuery->whereDoesntHave('user')
+                        ->orWhereHas('user', function (Builder $userQuery) use ($specificRemarks) {
+                            $userQuery->whereNull('remarks')
+                                ->orWhere('remarks', '')
+                                ->orWhereIn('remarks', $specificRemarks);
+                        });
+                });
+            } elseif ($hasEmpty) {
+                $query->where(function (Builder $subQuery) {
+                    $subQuery->whereDoesntHave('user')
+                        ->orWhereHas('user', function (Builder $userQuery) {
+                            $userQuery->whereNull('remarks')
+                                ->orWhere('remarks', '');
+                        });
+                });
+            } elseif (!empty($specificRemarks)) {
+                $query->whereHas('user', function (Builder $userQuery) use ($specificRemarks) {
+                    $userQuery->whereIn('remarks', $specificRemarks);
+                });
+            }
+            return;
+        }
+
         // Handle array values for 'in' operations
         if (is_array($value)) {
             $query->whereIn($field, $value);
