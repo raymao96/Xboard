@@ -125,7 +125,7 @@ class TicketService
 	$user = User::find($ticket->user_id);
 	
 	// --- 1. 直接根據備註判定語系 ---
-        $isTw = ($user && in_array($user->remarks, ['TW', 'RAYFISH']));
+        $isTw = PlanService::isTWUser($user);
 
         $cacheKey = 'ticket_sendEmailNotify_' . $ticket->user_id;
         if (!Cache::get($cacheKey)) {

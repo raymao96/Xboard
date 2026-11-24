@@ -19,7 +19,13 @@ class PlanController extends Controller
     }
     public function fetch(Request $request)
     {
-        $plan = $this->planService->getAvailablePlans();
-        return $this->success(PlanResource::collection($plan));
+        $isTW = PlanService::isTWHost($request->header('host'));
+        $plans = $this->planService->getAvailablePlans()
+            ->filter(function ($plan) use ($isTW) {
+                return (int) $plan->tw === ($isTW ? 1 : 0);
+            })
+            ->values();
+
+        return $this->success(PlanResource::collection($plans));
     }
 }

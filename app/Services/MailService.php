@@ -258,7 +258,7 @@ class MailService
             $isTraditional = true;
         } else {
             $user = \App\Models\User::where('email', $email)->first();
-            if ($user && in_array($user->remarks, ['TW', 'RAYFISH'])) {
+            if (PlanService::isTWUser($user)) {
                 $isTraditional = true;
             }
         }

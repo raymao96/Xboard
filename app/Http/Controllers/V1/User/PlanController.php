@@ -5,6 +5,7 @@ namespace App\Http\Controllers\V1\User;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PlanResource;
 use App\Models\Plan;
+use App\Services\PlanService;
 use Illuminate\Http\Request;
 
 class PlanController extends Controller
@@ -12,6 +13,7 @@ class PlanController extends Controller
     public function fetch(Request $request)
     {
         $user = $request->user();
+        $planService = app(PlanService::class);
 
         // =========================
         // 1. 單個 plan 查詢
@@ -23,8 +25,7 @@ class PlanController extends Controller
                 return $this->fail([400, __('Subscription plan does not exist')]);
             }
 
-            if (!app(\App\Services\PlanService::class)
-                ->isPlanAvailableForUser($plan, $user)) {
+            if (!$planService->isPlanRegionAllowed($plan, $user) || !$planService->isPlanAvailableForUser($plan, $user)) {
                 return $this->fail([400, __('Subscription plan does not exist')]);
             }
             return $this->success(PlanResource::make($plan));
@@ -33,35 +34,17 @@ class PlanController extends Controller
         // =========================
         // 2. 取得所有可用 plans
         // =========================
-        $plans = app(\App\Services\PlanService::class)
-            ->getAvailablePlans();
+        $plans = $planService->getAvailablePlans();
 
         // =========================
         // 3. TW / CN 業務過濾（不是語言）
         // =========================
-        $isTW = $this->isTWUser($user);
+        $isTW = PlanService::isTWUser($user);
 
         $plans = $plans->filter(function ($plan) use ($isTW) {
             return (int) $plan->tw === ($isTW ? 1 : 0);
         })->values();
 
         return $this->success(PlanResource::collection($plans));
-    }
-
-    /**
-     * 業務判斷：是否 TW 用戶（不是語言控制）
-     * 包含：備註為 TW 或 RAYFISH 的用戶
-     */
-    private function isTWUser($user): bool
-    {
-        if (!$user || !$user->remarks) {
-            return false;
-        }
-
-        // 將備註轉為大寫並去除空格
-        $remark = strtoupper(trim($user->remarks));
-
-        // 判斷是否在台灣用戶的白名單內
-        return in_array($remark, ['TW', 'RAYFISH']);
     }
 }

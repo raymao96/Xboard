@@ -60,8 +60,8 @@ class MailTemplate extends Model
 	$isTraditional = true;
 
         if ($user && isset($user->remarks)) {
-            // 已註冊用戶：根據備註判斷 (TW 或 CN)
-            $isTraditional = in_array($user->remarks, ['TW', 'RAYFISH']);
+            // 已註冊用戶：根據備註判斷 (TW / TW-* 或 CN)
+            $isTraditional = \App\Services\PlanService::isTWUser($user);
         } else if ($currentHost) {
             // 未註冊用戶（如註冊驗證碼）：根據域名判斷
             // 依照你的邏輯：當前的 Host 等於 app_url 裡面的 Host 時為 TW

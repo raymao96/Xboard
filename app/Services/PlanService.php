@@ -9,11 +9,63 @@ use Illuminate\Database\Eloquent\Collection;
 
 class PlanService
 {
+    public const TW_REMARK_PREFIX = 'TW';
+
     public Plan $plan;
 
     public function __construct(Plan $plan)
     {
         $this->plan = $plan;
+    }
+
+    /**
+     * 業務判斷：是否 TW 用戶（依備註 TW 或 TW-* 前綴判定）
+     */
+    public static function isTWUser(?User $user): bool
+    {
+        if (!$user || !$user->remarks) {
+            return false;
+        }
+
+        $remark = strtoupper(trim($user->remarks));
+
+        return $remark === self::TW_REMARK_PREFIX || str_starts_with($remark, self::TW_REMARK_PREFIX . '-');
+    }
+
+    /**
+     * 判斷是否為有效訂閱中的同方案續訂／重置流量
+     */
+    public static function isActiveSamePlanRenewal(Plan $plan, User $user): bool
+    {
+        return $user->plan_id !== null
+            && (int) $user->plan_id === (int) $plan->id
+            && ($user->expired_at === null || $user->expired_at > time());
+    }
+
+    /**
+     * 判斷用戶是否符合該方案的 TW / CN 分區資格
+     * 僅有效訂閱中的同方案續訂／重置流量放行，其餘嚴格比對 plan.tw 與用戶備註
+     */
+    public static function isPlanRegionAllowed(Plan $plan, User $user): bool
+    {
+        if (self::isActiveSamePlanRenewal($plan, $user)) {
+            return true;
+        }
+
+        return (int) $plan->tw === (self::isTWUser($user) ? 1 : 0);
+    }
+
+    /**
+     * 判斷請求 Host 是否屬於 TW 網域（同 UserService::createUser() 規則）
+     */
+    public static function isTWHost(?string $requestHost = null): bool
+    {
+        $requestHost = $requestHost ?? (request()->header('host') ?? '');
+        $configHost = parse_url((string) config('v2board.app_url'), PHP_URL_HOST)
+            ?: parse_url((string) config('app.url'), PHP_URL_HOST)
+            ?: parse_url((string) url('/'), PHP_URL_HOST);
+
+        return ($configHost && $requestHost === $configHost) || str_contains($requestHost, 'tw.');
     }
 
     /**
@@ -69,6 +121,10 @@ class PlanService
     public function validatePurchase(User $user, string $period): void
     {
         if (!$this->plan) {
+            throw new ApiException(__('Subscription plan does not exist'));
+        }
+
+        if (!self::isPlanRegionAllowed($this->plan, $user)) {
             throw new ApiException(__('Subscription plan does not exist'));
         }
 
